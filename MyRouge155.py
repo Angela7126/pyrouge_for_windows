@@ -84,7 +84,7 @@ class MyRouge155(object):
         self.log = log.get_global_console_logger()
         self.__set_dir_properties()
         self._config_file = None
-        self._settings_file = r"D:\Program Files\Python2.7.9\Lib\site-packages\pyrouge\settings.ini" #self.__get_config_path()
+        self._settings_file = self.__get_config_path()
         self.__set_rouge_dir(rouge_dir)
         self.args = self.__clean_rouge_args(rouge_args)
         self._system_filename_pattern = None
@@ -317,8 +317,33 @@ class MyRouge155(object):
             self._config_file, system_id)
         self.log.info(
             "Written ROUGE configuration to {}".format(self._config_file))
+    def evaluatecmd(self, system_id='None',conf_path = None, PerlPath =ur'D:\Perl\bin\perl', rouge_args=None ):
+        """
+        Run ROUGE to evaluate the system summaries in system_dir against
+        the model summaries in model_dir. The summaries are assumed to
+        be in the one-sentence-per-line HTML format ROUGE understands.
 
-    def evaluate(self, system_id='None',conf_path = None, PerlPath =ur'perl', rouge_args=None ):
+            system_id:  Optional system ID which will be printed in
+                        ROUGE's output.
+
+        Returns: Rouge output as string.
+
+        """
+        print("input system id set:")
+        print(system_id)
+        self.write_config(system_id=system_id, config_file_path = conf_path)
+        options = self.__get_options(rouge_args)
+        command = [PerlPath] + [self._bin_path] + options
+        print(command)
+        self.log.info(
+
+            "Running ROUGE with command {}".format(" ".join(command)))
+        command_str = " ".join(command)
+        rouge_output = os.popen(command_str)
+        rouge_output = rouge_output.read().decode("UTF-8")
+        return rouge_output
+
+    def evaluate(self, system_id='None',conf_path = None, PerlPath =ur'D:\Perl\bin\perl', rouge_args=None ):
         """
         Run ROUGE to evaluate the system summaries in system_dir against
         the model summaries in model_dir. The summaries are assumed to
@@ -338,7 +363,7 @@ class MyRouge155(object):
         print(command)
         self.log.info(
             "Running ROUGE with command {}".format(" ".join(command)))
-        rouge_output = check_output(command).decode("UTF-8")
+        rouge_output = check_output(command, shell=True).decode("UTF-8")
         return rouge_output
 
 ##    def evaluate(self, system_id=1,conf_path = None, rouge_args=None):
@@ -716,8 +741,11 @@ class MyRouge155(object):
 #            systempattern = r'P14-(\d+).xhtml.html.'+eachdir
             syspattern =system_filename_pattern + '.' +eachdir + '$'
             system_re = re.compile(syspattern)
+        #    print(syspattern)
             id_file_set = []
             for system_filename in sorted(system_filenames):
+       #         print(system_filename)
+
                 match = system_re.match(system_filename)
                 if match:
                     id = match.groups(0)[0]
@@ -807,7 +835,7 @@ def TestMyRouge():
     model_filename_pattern = r'p14-#ID#.xhtml.[A-Z].html'
     system_filename_pattern =r'P14-(\d+).xhtml.html.0[1-7]'
     config_file_path  = r'D:\pythonwork\code\paperparse\paper\rouge_conf.xml'
-    perlpathname=r'perl'
+    perlpathname=r'D:\Perl\bin\perl'
     sys_mod = MyRouge155.ProduceSysModPair(system_dir,model_dir,system_idset,model_filename_pattern,system_filename_pattern)
 ##    for eachtuple in sys_mod:
 ##        print eachtuple
